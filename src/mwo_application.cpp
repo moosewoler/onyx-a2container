@@ -1,3 +1,5 @@
+#include "onyx/data/configuration.h"
+#include "onyx/ui/languages.h"
 #include "mwo_application.h"
 #include "mwo_logger.h"
 
@@ -8,6 +10,12 @@ MwoApplication::MwoApplication(int &argc, char **argv)
     logger.log("ENTER MwoApplication:MwoApplication().");
 
     setApplicationName("a2container");
+
+    // 设置Translator
+    QTranslator t;
+    t.load(QLocale::system().name());
+    installTranslator(&t);
+    ui::loadTranslator(QLocale::system().name());
 
     logger.log("LEAVE MwoApplication:MwoApplication().");
 }

@@ -5,10 +5,10 @@
 #include "onyx/sys/sys.h"
 
 
-#include <sys/time.h>
+//#include <sys/time.h>
 #include "mwo_mainwindow.h"
 #include "mwo_logger.h"
-#include "game_widget.h"
+//#include "game_widget.h"
 
 MwoMainwindow::MwoMainwindow(QWidget *parent)
     : QWidget(0, Qt::FramelessWindowHint)
@@ -19,7 +19,7 @@ MwoMainwindow::MwoMainwindow(QWidget *parent)
     setAutoFillBackground(true);
     setBackgroundRole(QPalette::Base);
 
-    game_widget_ = new GameWidget(this);
+    //game_widget_ = new GameWidget(this);
 
     // FIXME: set up status bar, status_bar_ will cause crash.
     //status_bar_ = new StatusBar(this);
@@ -27,15 +27,15 @@ MwoMainwindow::MwoMainwindow(QWidget *parent)
     //connect(status_bar_, SIGNAL(menuClicked()), this, SLOT(showMenu()));
 
     // set up vertical layout
-    QVBoxLayout *layout = new QVBoxLayout;
-    layout->setMargin(0);
+    //QVBoxLayout *layout = new QVBoxLayout;
+    //layout->setMargin(0);
     //layout->addWidget(status_bar_);
-    setLayout(layout);
+    //setLayout(layout);
 
-    //// set up popup menu to long press screen
+    // set up popup menu to long press screen
     SysStatus & sys_status = SysStatus::instance();
-    connect( &sys_status, SIGNAL( mouseLongPress(QPoint, QSize) ), game_widget_, SLOT( onMouseLongPress(QPoint, QSize) ) );
-    connect( game_widget_, SIGNAL( popupMenu() ), this, SLOT( showMenu() ) );
+    connect( &sys_status, SIGNAL(mouseLongPress(QPoint, QSize) ), this, SLOT(OnMouseLongPress(QPoint, QSize) ) );
+    //connect( game_widget_, SIGNAL( popupMenu() ), this, SLOT( showMenu() ) );
     
     // set up screen watcher and refresh
     onyx::screen::watcher().addWatcher(this);
@@ -92,7 +92,7 @@ void MwoMainwindow::keyReleaseEvent(QKeyEvent *ke)
         stop();
         logger.log(QString("INFO  Key_Home pressed."));
     default:
-        qApp->sendEvent(game_widget_, ke);
+        //qApp->sendEvent(game_widget_, ke);
         logger.log(QString("INFO  unknown key pressed."));
         break;
     }
@@ -102,15 +102,22 @@ void MwoMainwindow::keyReleaseEvent(QKeyEvent *ke)
 
 void MwoMainwindow::showMenu()
 {
+    logger.log("ENTER MwoMainwindow:showMenu().");
     PopupMenu menu(this);
+
+    // 增加自定义菜单项
     //gomoku_actions_.generateActions();
     //menu.addGroup(&gomoku_actions_);
+
+    // 增加系统菜单项
     std::vector<int> all;
     all.push_back(ROTATE_SCREEN);
     all.push_back(MUSIC);
     all.push_back(RETURN_TO_LIBRARY);
     system_actions_.generateActions(all);
     menu.setSystemAction(&system_actions_);
+
+    // 未知
     if(menu.popup() != QDialog::Accepted)
     {
         QApplication::processEvents();
@@ -119,18 +126,22 @@ void MwoMainwindow::showMenu()
         return;
     }
 
+    // 选择的项目
     QAction * group = menu.selectedCategory();
 
+    // 根据选择的项目，执行相应的动作
     if(group == system_actions_.category())
     {
         SystemAction system_action = system_actions_.selected();
         switch(system_action)
         {
+            // 退出程序
             case RETURN_TO_LIBRARY:
                 {
                     qApp->quit();
                 }
                 break;
+            // 旋转屏幕
             case ROTATE_SCREEN:
                 {
                     ScreenRotationDialog dialog(this);
@@ -139,6 +150,7 @@ void MwoMainwindow::showMenu()
                     onyx::screen::watcher().enqueue(this, onyx::screen::ScreenProxy::GU, onyx::screen::ScreenCommand::WAIT_ALL);
                 }
                 break;
+            // 屏幕更新类型，应该是开/关局部刷新的那个按钮
             case SCREEN_UPDATE_TYPE:
                 {
 #ifndef BUILD_FOR_FB
@@ -147,9 +159,9 @@ void MwoMainwindow::showMenu()
 #endif
                 }
                 break;
+            // 音乐
             case MUSIC:
                 {
-                    // Start or show music player.
 #ifndef BUILD_FOR_FB
                     onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GU);
 #endif
@@ -162,6 +174,7 @@ void MwoMainwindow::showMenu()
     }
     //else if(group == gomoku_actions_.category())
     //{
+    // 用户自定义菜单项目的处理
     //    GomokuActionsType index = gomoku_actions_.selected();
     //    switch(index)
     //    {
@@ -178,19 +191,30 @@ void MwoMainwindow::showMenu()
     //        break;
     //    }
     //}
+
+    // 重画屏幕
     repaint();
     onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
+    logger.log("LEAVE MwoMainwindow:showMenu().");
 }
 
 
 
-//void MwoMainwindow::mousePressEvent(QMouseEvent*me)
-//{
-//    logger.log("ENTER MwoMainwindow:mousePressEvent().");
-//    //me->accept();
-//    logger.log("LEAVE MwoMainwindow:mousePressEvent().");
-//}
-//
+void MwoMainwindow::mousePressEvent(QMouseEvent*me)
+{
+    logger.log("ENTER MwoMainwindow:mousePressEvent().");
+    mwo_screen_.TestDrawSpot();
+    me->accept();
+    logger.log("LEAVE MwoMainwindow:mousePressEvent().");
+}
+
+void MwoMainwindow::OnMouseLongPress(QPoint point, QSize size)
+{
+    logger.log("ENTER MwoMainwindow:mouseLongPressEvent().");
+    showMenu();
+    logger.log("LEAVE MwoMainwindow:mouseLongPressEvent().");
+}
+
 //bool MwoMainwindow::eventFilter(QObject *obj, QEvent *e)
 //{
 //    logger.log("ENTER MwoMainwindow:eventFilter().");
@@ -245,3 +269,4 @@ bool MwoMainwindow::stop()
 //    logger.log("ENTER MwoMainwindow:OnTimer().");
 //    logger.log("LEAVE MwoMainwindow:OnTimer().");
 //}
+
