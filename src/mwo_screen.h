@@ -20,7 +20,8 @@ public:
     void TestDrawSpot(void);
     void TestDrawPicture(void);
     void TestAnimation(void);
-
+private:
+    __u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
 private:
     int             fb_;
     int             ioctl_;
