@@ -203,7 +203,9 @@ void MwoMainwindow::showMenu()
 void MwoMainwindow::mousePressEvent(QMouseEvent*me)
 {
     logger.log("ENTER MwoMainwindow:mousePressEvent().");
-    mwo_screen_.TestDrawSpot();
+    //mwo_screen_.TestDrawSpot();
+    //mwo_screen_.TestDrawPicture();
+    mwo_screen_.TestAnimation();
     me->accept();
     logger.log("LEAVE MwoMainwindow:mousePressEvent().");
 }

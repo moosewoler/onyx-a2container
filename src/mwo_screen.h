@@ -12,27 +12,43 @@
 
 class MwoScreen
 {
-public:
-    MwoScreen();
-    ~MwoScreen();
+    public:
+        enum OpReturn{
+            OK    = 0,
+            ERROR_FB_OPEN_ERROR,
+            ERROR_FB_READ_ERROR,
+            ERROR_UNKNOWN
+        };
+        enum ScreenState{
+            READY = 0,
+            BUSY
+        };
+    public:
+        MwoScreen();
+        ~MwoScreen();
 
-public:
-    void TestDrawSpot(void);
-    void TestDrawPicture(void);
-    void TestAnimation(void);
-private:
-    __u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
-private:
-    int             fb_;
-    int             ioctl_;
-    int             mem_size_;
-    unsigned short* mem_;
-    __u32           scheme_;
-    __u32           pwrdown_delay_;
-    __u32           marker_val_;
+    public:
+        void TestDrawSpot(void);
+        void TestDrawPicture(void);
+        void TestAnimation(void);
+    public:
+        __u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
+        void  DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr);
 
-    struct fb_var_screeninfo screen_info_;
-    struct fb_var_screeninfo screen_info_saved_;
+    private:
+        int             fb_;
+        int             ioctl_;
+        int             mem_size_;
+        unsigned short* mem_;
+        //__u32           scheme_;
+        //__u32           pwrdown_delay_;
+        __u32           marker_val_;
+
+        struct fb_var_screeninfo screen_info_;
+        struct fb_var_screeninfo screen_info_saved_;
+
+        enum OpReturn    opret_;
+        enum ScreenState state_;
 };
 
 #endif
