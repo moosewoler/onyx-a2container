@@ -283,6 +283,9 @@ void MwoScreen::TestAnimation(void)
             for (frame=0;frame<16;frame++)
             {
                 DrawPicture(x,y, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                DrawPicture(x+300,y, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                DrawPicture(x,y+300, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                DrawPicture(x+300,y+300, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
                 //UpdateToDisplay(x, y, images[frame]->width, images[frame]->height, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
                 UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
             }
