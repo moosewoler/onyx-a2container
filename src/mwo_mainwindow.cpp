@@ -1,4 +1,5 @@
 #include <QtGui/QtGui>
+#include <QLabel>
 
 #include "onyx/screen/screen_update_watcher.h"
 #include "onyx/ui/screen_rotation_dialog.h"
@@ -73,7 +74,10 @@ void MwoMainwindow::keyReleaseEvent(QKeyEvent *ke)
         logger.log(QString("INFO  Key_Right pressed."));
         break;
     case Qt::Key_PageDown:
-        logger.log(QString("INFO  Key_PageDown pressed."));
+        {
+            logger.log(QString("INFO  Key_PageDown pressed."));
+            drawtext();
+        }
         break;
     case Qt::Key_Down:
         logger.log(QString("INFO  Key_Down pressed."));
@@ -216,35 +220,6 @@ void MwoMainwindow::OnMouseLongPress(QPoint point, QSize size)
     showMenu();
     logger.log("LEAVE MwoMainwindow:mouseLongPressEvent().");
 }
-
-//bool MwoMainwindow::eventFilter(QObject *obj, QEvent *e)
-//{
-//    logger.log("ENTER MwoMainwindow:eventFilter().");
-//
-//    qDebug("Select event:%d", e->type());
-//    if (e->type() == QEvent::MouseButtonRelease && obj->isWidgetType())
-//    {
-//        onyx::screen::instance().updateWidget(0, onyx::screen::ScreenProxy::GU);
-//    }
-//
-//    logger.log("LEAVE MwoMainwindow:eventFilter().");
-//    return QObject::eventFilter(obj, e);
-//}
-//
-//void MwoMainwindow::paintEvent(QPaintEvent *e)
-//{
-//    logger.log("ENTER MwoMainwindow:paintEvent().");
-//
-//    QPainter painter(this);
-//    QFont font = QApplication::font();
-//    font.setPointSize(24);
-//    painter.setFont(font);
-//    QFontMetrics fm(font);
-//    painter.drawText(QRect(0,0, width(), 200), Qt::AlignLeft, "Five in A Row by Moose W. Oler");
-//    onyx::screen::instance().updateWidget(0, onyx::screen::ScreenProxy::A2, true, onyx::screen::ScreenCommand::WAIT_ALL);
-//
-//    logger.log("LEAVE MwoMainwindow:paintEvent().");
-//}
 
 bool MwoMainwindow::start()
 {

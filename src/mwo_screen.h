@@ -35,14 +35,18 @@ class MwoScreen
         __u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
         void  DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr);
 
+        void Update(void);
+        void Update(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
+        void Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr);
+    public:
+        int xres(void);
+        int yres(void);
     private:
-        int             fb_;
-        int             ioctl_;
-        int             mem_size_;
+        int fb_;
+        int ioctl_;
+        int mem_size_;
         unsigned short* mem_;
-        //__u32           scheme_;
-        //__u32           pwrdown_delay_;
-        __u32           marker_val_;
+        __u32 marker_val_;
 
         struct fb_var_screeninfo screen_info_;
         struct fb_var_screeninfo screen_info_saved_;

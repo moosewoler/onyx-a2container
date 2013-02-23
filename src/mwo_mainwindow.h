@@ -31,11 +31,11 @@ protected:
     virtual void mousePressEvent(QMouseEvent*);
     //virtual void closeEvent(QCloseEvent * event);
     //virtual bool eventFilter(QObject *obj, QEvent *event);
-    //virtual void paintEvent(QPaintEvent *);
 
 private Q_SLOTS:
     void showMenu();
     void OnMouseLongPress(QPoint, QSize);
+    void drawtext(void);
     //void OnTimer();
 private:
     SystemActions system_actions_;

@@ -278,7 +278,7 @@ void MwoScreen::TestAnimation(void)
             &gimp_image_013,&gimp_image_014,&gimp_image_015,&gimp_image_016
         };
 
-        for (i=0;i<20;i++)
+        for (i=0;i<5;i++)
         {
             for (frame=0;frame<16;frame++)
             {
@@ -388,4 +388,86 @@ void MwoScreen::DrawPicture(int left, int top, int width, int height, int bpp, u
         }
     }
     logger.log("LEAVE MwoScreen:DrawPicture().");
+}
+
+
+void MwoScreen::Update(void)
+{
+    Update(0,0,screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_A2, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+}
+
+void MwoScreen::Update(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags)
+{
+	struct mxcfb_update_data upd_data;
+    __u32   upd_marker_data;
+	int     retval;
+	int     wait = wait_for_complete | flags;
+	int     max_retry = 10;
+
+    // FIXME: 计算出合适的边界值
+    //int tleft= -(left+width)+screen_info_.xres;
+    //int ttop = -(top+height-1)+screen_info_.yres;
+    int tleft= left;
+    int ttop = top;
+
+	upd_data.update_mode = UPDATE_MODE_PARTIAL;
+	upd_data.waveform_mode = waveform;
+	upd_data.update_region.left = tleft;
+	upd_data.update_region.width = width;
+	upd_data.update_region.top = ttop;
+	upd_data.update_region.height = height;
+	upd_data.temp = TEMP_USE_AMBIENT;
+	upd_data.flags = flags;
+
+	if (wait)
+    {
+		/* Get unique marker value */
+		upd_data.update_marker = marker_val_++;
+    }
+	else
+    {
+		upd_data.update_marker = 0;
+    }
+
+	retval = ioctl(ioctl_, MXCFB_SEND_UPDATE, &upd_data);
+	while (retval < 0) 
+    {
+		/* We have limited memory available for updates, so wait and
+		 * then try again after some updates have completed */
+		sleep(1);
+		retval = ioctl(ioctl_, MXCFB_SEND_UPDATE, &upd_data);
+		if (--max_retry <= 0) 
+        {
+			logger.log("ERROR Max retries exceeded");
+			wait = 0;
+			flags = 0;
+			break;
+		}
+	}
+
+	if (wait) 
+    {
+		upd_marker_data = upd_data.update_marker;
+
+		/* Wait for update to complete */
+		retval = ioctl(ioctl_, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_marker_data);
+		if (retval < 0) 
+        {
+			logger.log("ERROR Wait for update complete failed.  Error = " + QString::number(retval));
+			flags = 0;
+		}
+	}
+}
+
+void MwoScreen::Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr)
+{
+}
+
+int MwoScreen::xres(void)
+{
+    return screen_info_.xres;
+}
+int MwoScreen::yres(void)
+{
+    return screen_info_.yres;
 }
