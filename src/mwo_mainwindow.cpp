@@ -76,7 +76,6 @@ void MwoMainwindow::keyReleaseEvent(QKeyEvent *ke)
     case Qt::Key_PageDown:
         {
             logger.log(QString("INFO  Key_PageDown pressed."));
-            drawtext();
         }
         break;
     case Qt::Key_Down:
@@ -110,8 +109,8 @@ void MwoMainwindow::showMenu()
     PopupMenu menu(this);
 
     // 增加自定义菜单项
-    //gomoku_actions_.generateActions();
-    //menu.addGroup(&gomoku_actions_);
+    mwo_actions_.generateActions();
+    menu.addGroup(&mwo_actions_);
 
     // 增加系统菜单项
     std::vector<int> all;
@@ -142,6 +141,8 @@ void MwoMainwindow::showMenu()
             // 退出程序
             case RETURN_TO_LIBRARY:
                 {
+                    repaint();
+                    onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
                     qApp->quit();
                 }
                 break;
@@ -176,29 +177,32 @@ void MwoMainwindow::showMenu()
                 break;
         }
     }
-    //else if(group == gomoku_actions_.category())
-    //{
-    // 用户自定义菜单项目的处理
-    //    GomokuActionsType index = gomoku_actions_.selected();
-    //    switch(index)
-    //    {
-    //    case NEW:
-    //        gomoku->newGame();
-    //        update();
-    //        break;
-    //    case ABOUT:
-    //        about();
-    //        repaint();
-    //        onyx::screen::watcher().enqueue(this, onyx::screen::ScreenProxy::GU, onyx::screen::ScreenCommand::WAIT_ALL);
-    //        break;
-    //    default:
-    //        break;
-    //    }
-    //}
+    else if(group == mwo_actions_.category())
+    {
+        // 用户自定义菜单项目的处理
+        MwoActionsType index = mwo_actions_.selected();
+        switch(index)
+        {
+        case TEST1:
+            mwo_screen_.TestDrawSpot();
+            break;
+        case TEST2:
+            mwo_screen_.TestDrawPicture();
+            break;
+        case TEST3:
+            mwo_screen_.TestAnimation();
+            break;
+        case DITHER:
+            dither();
+            break;
+        default:
+            break;
+        }
+    }
 
     // 重画屏幕
-    repaint();
-    onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
+    //repaint();
+    //onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
     logger.log("LEAVE MwoMainwindow:showMenu().");
 }
 
@@ -207,9 +211,6 @@ void MwoMainwindow::showMenu()
 void MwoMainwindow::mousePressEvent(QMouseEvent*me)
 {
     logger.log("ENTER MwoMainwindow:mousePressEvent().");
-    //mwo_screen_.TestDrawSpot();
-    //mwo_screen_.TestDrawPicture();
-    mwo_screen_.TestAnimation();
     me->accept();
     logger.log("LEAVE MwoMainwindow:mousePressEvent().");
 }
@@ -247,3 +248,13 @@ bool MwoMainwindow::stop()
 //    logger.log("LEAVE MwoMainwindow:OnTimer().");
 //}
 
+
+
+void MwoMainwindow::dither(void)
+{
+    logger.log("ENTER MwoMainwindow:dither().");
+
+    mwo_screen_.TestDrawSpotDither();
+
+    logger.log("LEAVE MwoMainwindow:dither().");
+}

@@ -31,16 +31,23 @@ class MwoScreen
         void TestDrawSpot(void);
         void TestDrawPicture(void);
         void TestAnimation(void);
+
+        void TestDrawSpotDither(void);
     public:
-        __u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
-        void  DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr);
+        //__u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
+        //void  DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr);
 
         void Update(void);
         void Update(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
         void Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr);
+
+        void DrawCircle(int x, int y, int r);
     public:
         int xres(void);
         int yres(void);
+    private:
+        inline void PutDot(int x, int y, int c); 
+        //inline void PutDot(int x, int y); 
     private:
         int fb_;
         int ioctl_;

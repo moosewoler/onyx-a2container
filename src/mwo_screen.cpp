@@ -11,6 +11,38 @@
 #define WAVEFORM_MODE_GC4	0x3	/* Lower fidelity */
 #define WAVEFORM_MODE_A2	0x4	/* Fast black/white animation */
 
+//========================================
+// putdot_dither - draw pixel using ordered dither
+// x,y: screen coordinates, c: color(0-64).
+// (This works on all eink kindle models.)
+//----------------------------------------
+void inline MwoScreen::PutDot(int x,int y,int c) 
+{
+    static int dither_map_64[64] = { 
+        1, 33,9, 41,3, 35,11,43,
+        49,17,57,25,51,19,59,27,
+        13,45,5, 37,15,47,7, 39,
+        61,29,53,21,63,31,55,23,
+        4, 36,12,44,2, 34,10,42,
+        52,20,60,28,50,18,58,26,
+        16,48,8, 40,14,46,6, 38,
+        64,32,56,24,62,30,54,22 }; // 64 threshold dither table, see http://en.wikipedia.org/wiki/Ordered_dithering
+
+//    mem_[pb*x/8+fs*y]=((128&(c-dither_map_64[(7&x)+8*(7&y)]))/128*(blk&(240*(1&~x)|
+//                       15*(1&x)|fb0[pb*x/8+fs*y])))|
+//                       ((128&(dither_map_64[(7&x)+8*(7&y)]-c))/128*wht|
+//                       (blk&((240*(1&x)|15*(1&~x))&fb0[pb*x/8+fs*y]))); // geekmaster formula 42
+
+    if (c > dither_map_64[x&7, y&7])
+    {
+        register int tx=-x+screen_info_.xres;
+        register int ty=-y+screen_info_.yres;
+        register int index;
+        index = ty*screen_info_.xres_virtual + tx;
+        mem_[index] = 0x0;
+    }
+}
+
 MwoScreen::MwoScreen(void)
 {
     logger.log("ENTER MwoScreen:MwoScreen().");
@@ -205,7 +237,7 @@ void MwoScreen::TestDrawSpot(void)
 
         logger.log("INFO Blank whole screen");
         memset(mem_, 0xFF, mem_size_);
-        UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
+        Update(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
 
         logger.log("INFO test draw spot");
 
@@ -231,8 +263,10 @@ void MwoScreen::TestDrawSpot(void)
             }
             // FIXME: 变换不适用于边界值
             //UpdateToDisplay(0, y, screen_info_.xres, 1, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
-            UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+            //UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+            Update();
         }
+        state_ = MwoScreen::READY;
         logger.log("LEAVE MwoScreen:TestDrawSpot().");
     }
 }
@@ -243,18 +277,20 @@ void MwoScreen::TestDrawPicture(void)
 
     if ( state_ == MwoScreen::READY)
     {
+        state_ = MwoScreen::BUSY;
         logger.log("INFO  Blank whole screen");
         memset(mem_, 0xFF, mem_size_);
-        UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
+        Update(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
 
         logger.log("INFO  test draw pic");
         {
             int x=100;
             int y=200;
-            DrawPicture(x,y, gimp_image_001.width, gimp_image_001.height, 2, (unsigned char*)(gimp_image_001.pixel_data));
-            UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+            Copy(x,y, gimp_image_001.width, gimp_image_001.height, 2, (unsigned char*)(gimp_image_001.pixel_data));
+            //UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+            Update();
         }
-        state_ = MwoScreen::BUSY;
+        state_ = MwoScreen::READY;
     }
 
 }
@@ -264,8 +300,9 @@ void MwoScreen::TestAnimation(void)
 
     if ( state_ == MwoScreen::READY)
     {
+        state_ = MwoScreen::BUSY;
         memset(mem_, 0xFF, mem_size_);
-        UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
+        Update(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
 
         int i;
         int x=100;
@@ -282,113 +319,168 @@ void MwoScreen::TestAnimation(void)
         {
             for (frame=0;frame<16;frame++)
             {
-                DrawPicture(x,y, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
-                DrawPicture(x+300,y, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
-                DrawPicture(x,y+300, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
-                DrawPicture(x+300,y+300, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                Copy(x,y, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                Copy(x+300,y, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                Copy(x,y+300, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
+                Copy(x+300,y+300, images[frame]->width, images[frame]->height, 2, (unsigned char*)(images[frame]->pixel_data));
                 //UpdateToDisplay(x, y, images[frame]->width, images[frame]->height, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
-                UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+                //UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
+                Update();
             }
         }
+        state_ = MwoScreen::READY;
+    }
+}
+// Midpoint Circle Algorithm
+// see: http://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+void MwoScreen::DrawCircle(int cx,int cy,int r) 
+{
+    int e=-r;
+    int x=r;
+    int y=0;
+    while (x>y) 
+    {
+        PutDot(cx+y,cy-x,64); 
+        PutDot(cx+x,cy-y,40);
+        PutDot(cx+x,cy+y,24); 
+        PutDot(cx+y,cy+x,8);
+        PutDot(cx-y,cy+x,0); 
+        PutDot(cx-x,cy+y,16);
+        PutDot(cx-x,cy-y,32); 
+        PutDot(cx-y,cy-x,48);
+        e+=y; 
+        y++; 
+        e+=y;
+        if (e>0) 
+        { 
+            e-=x; 
+            x-=1; 
+            e-=x; 
+        }
+    }
+}
+
+void MwoScreen::TestDrawSpotDither(void)
+{
+    logger.log("ENTER MwoScreen:TestDrawSpotDither().");
+
+    if (state_ == MwoScreen::READY)
+    {
+        int retval;
+        int wave_mode = WAVEFORM_MODE_A2;
+        int x,y;
+
         state_ = MwoScreen::BUSY;
-    }
-}
 
-__u32 MwoScreen::UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags)
-{
-    // 见2013-02-22笔记1号
-	struct mxcfb_update_data upd_data;
-    __u32 upd_marker_data;
-	int retval;
-	int wait = wait_for_complete | flags;
-	int max_retry = 10;
+        memset(mem_, 0xFF, mem_size_);
+        Update(0, 0, screen_info_.xres, screen_info_.yres, WAVEFORM_MODE_AUTO, TRUE, 0);
 
-    // FIXME: 变换不适用于边界值
-    //int tleft= -(left+width)+screen_info_.xres;
-    //int ttop = -(top+height-1)+screen_info_.yres;
-    int tleft= left;
-    int ttop = top;
-
-	upd_data.update_mode = UPDATE_MODE_PARTIAL;
-	upd_data.waveform_mode = waveform;
-	upd_data.update_region.left = tleft;
-	upd_data.update_region.width = width;
-	upd_data.update_region.top = ttop;
-	upd_data.update_region.height = height;
-	upd_data.temp = TEMP_USE_AMBIENT;
-	upd_data.flags = flags;
-
-	if (wait)
-		/* Get unique marker value */
-		upd_data.update_marker = marker_val_++;
-	else
-		upd_data.update_marker = 0;
-
-	retval = ioctl(ioctl_, MXCFB_SEND_UPDATE, &upd_data);
-	while (retval < 0) 
-    {
-		/* We have limited memory available for updates, so wait and
-		 * then try again after some updates have completed */
-		sleep(1);
-		retval = ioctl(ioctl_, MXCFB_SEND_UPDATE, &upd_data);
-		if (--max_retry <= 0) 
+        for (int r=10;r<200;r++)
         {
-			printf("Max retries exceeded\n");
-			wait = 0;
-			flags = 0;
-			break;
-		}
-	}
-
-	if (wait) 
-    {
-		upd_marker_data = upd_data.update_marker;
-
-		/* Wait for update to complete */
-		retval = ioctl(ioctl_, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_marker_data);
-		if (retval < 0) 
-        {
-			printf("Wait for update complete failed.  Error = 0x%x", retval);
-			flags = 0;
-		}
-	}
-
-    return upd_data.waveform_mode;
-}
-
-void MwoScreen::DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr)
-{
-    logger.log("ENTER MwoScreen:DrawPicture().");
-
-	unsigned char* fbp = (unsigned char*)mem_;
-    int i,j,k;
-    int index;
-
-    logger.log("INFO  left=" + QString::number(left) + " right=" + QString::number(top) + " width="+ QString::number(width) + " height=" + QString::number(height));
-
-    // TODO: add rotation support
-    // TODO: use memcpy to optimize(maybe) the routine
-    left= -(left+width)+screen_info_.xres;
-    top = -(top+height)+screen_info_.yres;
-
-    logger.log("INFO  rotate left=" + QString::number(left) + " right=" + QString::number(top) + " width="+ QString::number(width) + " height=" + QString::number(height));
-
-    ptr = ptr + height * width * bpp;
-
-	for (i = top; i < top+height; i++)
-    {
-		for (j = left; j < left+width;j++)
-        {
-            index= i*screen_info_.xres_virtual+j;
-            for (k=0;k<bpp;k++)
-            {
-                fbp[index*bpp+k] = *ptr;
-                ptr--;
-            }
+            DrawCircle(xres()/2,yres()/2,r); 
+            Update();
         }
+
+        state_ = MwoScreen::READY;
     }
-    logger.log("LEAVE MwoScreen:DrawPicture().");
+    logger.log("LEAVE MwoScreen:TestDrawSpot().");
 }
+
+//__u32 MwoScreen::UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags)
+//{
+//    // 见2013-02-22笔记1号
+//	struct mxcfb_update_data upd_data;
+//    __u32 upd_marker_data;
+//	int retval;
+//	int wait = wait_for_complete | flags;
+//	int max_retry = 10;
+//
+//    // FIXME: 变换不适用于边界值
+//    //int tleft= -(left+width)+screen_info_.xres;
+//    //int ttop = -(top+height-1)+screen_info_.yres;
+//    int tleft= left;
+//    int ttop = top;
+//
+//	upd_data.update_mode = UPDATE_MODE_PARTIAL;
+//	upd_data.waveform_mode = waveform;
+//	upd_data.update_region.left = tleft;
+//	upd_data.update_region.width = width;
+//	upd_data.update_region.top = ttop;
+//	upd_data.update_region.height = height;
+//	upd_data.temp = TEMP_USE_AMBIENT;
+//	upd_data.flags = flags;
+//
+//	if (wait)
+//		/* Get unique marker value */
+//		upd_data.update_marker = marker_val_++;
+//	else
+//		upd_data.update_marker = 0;
+//
+//	retval = ioctl(ioctl_, MXCFB_SEND_UPDATE, &upd_data);
+//	while (retval < 0) 
+//    {
+//		/* We have limited memory available for updates, so wait and
+//		 * then try again after some updates have completed */
+//		sleep(1);
+//		retval = ioctl(ioctl_, MXCFB_SEND_UPDATE, &upd_data);
+//		if (--max_retry <= 0) 
+//        {
+//			printf("Max retries exceeded\n");
+//			wait = 0;
+//			flags = 0;
+//			break;
+//		}
+//	}
+//
+//	if (wait) 
+//    {
+//		upd_marker_data = upd_data.update_marker;
+//
+//		/* Wait for update to complete */
+//		retval = ioctl(ioctl_, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_marker_data);
+//		if (retval < 0) 
+//        {
+//			printf("Wait for update complete failed.  Error = 0x%x", retval);
+//			flags = 0;
+//		}
+//	}
+//
+//    return upd_data.waveform_mode;
+//}
+
+//void MwoScreen::DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr)
+//{
+//    logger.log("ENTER MwoScreen:DrawPicture().");
+//
+//	unsigned char* fbp = (unsigned char*)mem_;
+//    int i,j,k;
+//    int index;
+//
+//    logger.log("INFO  left=" + QString::number(left) + " right=" + QString::number(top) + " width="+ QString::number(width) + " height=" + QString::number(height));
+//
+//    // TODO: add rotation support
+//    // TODO: use memcpy to optimize(maybe) the routine
+//    left= -(left+width)+screen_info_.xres;
+//    top = -(top+height)+screen_info_.yres;
+//
+//    logger.log("INFO  rotate left=" + QString::number(left) + " right=" + QString::number(top) + " width="+ QString::number(width) + " height=" + QString::number(height));
+//
+//    ptr = ptr + height * width * bpp;
+//
+//	for (i = top; i < top+height; i++)
+//    {
+//		for (j = left; j < left+width;j++)
+//        {
+//            index= i*screen_info_.xres_virtual+j;
+//            for (k=0;k<bpp;k++)
+//            {
+//                fbp[index*bpp+k] = *ptr;
+//                ptr--;
+//            }
+//        }
+//    }
+//    logger.log("LEAVE MwoScreen:DrawPicture().");
+//}
 
 
 void MwoScreen::Update(void)
@@ -398,6 +490,7 @@ void MwoScreen::Update(void)
 
 void MwoScreen::Update(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags)
 {
+    // 见2013-02-22笔记1号
 	struct mxcfb_update_data upd_data;
     __u32   upd_marker_data;
 	int     retval;
@@ -461,6 +554,29 @@ void MwoScreen::Update(int left, int top, int width, int height, int waveform, i
 
 void MwoScreen::Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr)
 {
+	unsigned char* fbp = (unsigned char*)mem_;
+    int i,j,k;
+    int index;
+
+    // TODO: add rotation support
+    // TODO: use memcpy to optimize(maybe) the routine
+    left= -(left+width)+screen_info_.xres;
+    top = -(top+height)+screen_info_.yres;
+
+    ptr = ptr + height * width * bpp;
+
+	for (i = top; i < top+height; i++)
+    {
+		for (j = left; j < left+width;j++)
+        {
+            index= i*screen_info_.xres_virtual+j;
+            for (k=0;k<bpp;k++)
+            {
+                fbp[index*bpp+k] = *ptr;
+                ptr--;
+            }
+        }
+    }
 }
 
 int MwoScreen::xres(void)

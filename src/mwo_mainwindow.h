@@ -7,8 +7,7 @@
 //#include "onyx/screen/screen_proxy.h"
 //#include "onyx/ui/ui_utils.h"
 //#include "game_widget.h"
-//#include "game_actions.h"
-
+#include "mwo_actions.h"
 #include "mwo_screen.h"
 
 using namespace ui;
@@ -35,10 +34,12 @@ protected:
 private Q_SLOTS:
     void showMenu();
     void OnMouseLongPress(QPoint, QSize);
-    void drawtext(void);
     //void OnTimer();
 private:
+    void dither(void);
+private:
     SystemActions system_actions_;
+    MwoActions    mwo_actions_;
     MwoScreen     mwo_screen_;
     //GameWidget* game_widget_;
     //StatusBar   status_bar_;
