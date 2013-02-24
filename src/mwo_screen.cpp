@@ -11,37 +11,6 @@
 #define WAVEFORM_MODE_GC4	0x3	/* Lower fidelity */
 #define WAVEFORM_MODE_A2	0x4	/* Fast black/white animation */
 
-//========================================
-// putdot_dither - draw pixel using ordered dither
-// x,y: screen coordinates, c: color(0-64).
-// (This works on all eink kindle models.)
-//----------------------------------------
-void inline MwoScreen::PutDot(int x,int y,int c) 
-{
-    static int dither_map_64[64] = { 
-        1, 33,9, 41,3, 35,11,43,
-        49,17,57,25,51,19,59,27,
-        13,45,5, 37,15,47,7, 39,
-        61,29,53,21,63,31,55,23,
-        4, 36,12,44,2, 34,10,42,
-        52,20,60,28,50,18,58,26,
-        16,48,8, 40,14,46,6, 38,
-        64,32,56,24,62,30,54,22 }; // 64 threshold dither table, see http://en.wikipedia.org/wiki/Ordered_dithering
-
-//    mem_[pb*x/8+fs*y]=((128&(c-dither_map_64[(7&x)+8*(7&y)]))/128*(blk&(240*(1&~x)|
-//                       15*(1&x)|fb0[pb*x/8+fs*y])))|
-//                       ((128&(dither_map_64[(7&x)+8*(7&y)]-c))/128*wht|
-//                       (blk&((240*(1&x)|15*(1&~x))&fb0[pb*x/8+fs*y]))); // geekmaster formula 42
-
-    if (c > dither_map_64[x&7, y&7])
-    {
-        register int tx=-x+screen_info_.xres;
-        register int ty=-y+screen_info_.yres;
-        register int index;
-        index = ty*screen_info_.xres_virtual + tx;
-        mem_[index] = 0x0;
-    }
-}
 
 MwoScreen::MwoScreen(void)
 {
@@ -331,34 +300,6 @@ void MwoScreen::TestAnimation(void)
         state_ = MwoScreen::READY;
     }
 }
-// Midpoint Circle Algorithm
-// see: http://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-void MwoScreen::DrawCircle(int cx,int cy,int r) 
-{
-    int e=-r;
-    int x=r;
-    int y=0;
-    while (x>y) 
-    {
-        PutDot(cx+y,cy-x,64); 
-        PutDot(cx+x,cy-y,40);
-        PutDot(cx+x,cy+y,24); 
-        PutDot(cx+y,cy+x,8);
-        PutDot(cx-y,cy+x,0); 
-        PutDot(cx-x,cy+y,16);
-        PutDot(cx-x,cy-y,32); 
-        PutDot(cx-y,cy-x,48);
-        e+=y; 
-        y++; 
-        e+=y;
-        if (e>0) 
-        { 
-            e-=x; 
-            x-=1; 
-            e-=x; 
-        }
-    }
-}
 
 void MwoScreen::TestDrawSpotDither(void)
 {
@@ -385,6 +326,103 @@ void MwoScreen::TestDrawSpotDither(void)
     }
     logger.log("LEAVE MwoScreen:TestDrawSpot().");
 }
+
+void MwoScreen::Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr)
+{
+	unsigned char* fbp = (unsigned char*)mem_;
+    int i,j,k;
+    int index;
+
+    // TODO: add rotation support
+    // TODO: use memcpy to optimize(maybe) the routine
+    left= -(left+width)+screen_info_.xres;
+    top = -(top+height)+screen_info_.yres;
+
+    ptr = ptr + height * width * bpp;
+
+	for (i = top; i < top+height; i++)
+    {
+		for (j = left; j < left+width;j++)
+        {
+            index= i*screen_info_.xres_virtual+j;
+            for (k=0;k<bpp;k++)
+            {
+                fbp[index*bpp+k] = *ptr;
+                ptr--;
+            }
+        }
+    }
+}
+
+// Midpoint Circle Algorithm
+// see: http://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+void MwoScreen::DrawCircle(int cx,int cy,int r) 
+{
+    int e=-r;
+    int x=r;
+    int y=0;
+    while (x>y) 
+    {
+        PutDot(cx+y,cy-x,0); 
+        PutDot(cx+x,cy-y,8);
+        PutDot(cx+x,cy+y,16); 
+        PutDot(cx+y,cy+x,24);
+        PutDot(cx-y,cy+x,32); 
+        PutDot(cx-x,cy+y,40);
+        PutDot(cx-x,cy-y,48); 
+        PutDot(cx-y,cy-x,56);
+        e+=y; 
+        y++; 
+        e+=y;
+        if (e>0) 
+        { 
+            e-=x; 
+            x-=1; 
+            e-=x; 
+        }
+    }
+}
+
+//========================================
+// putdot_dither - draw pixel using ordered dither
+// x,y: screen coordinates, c: color(0-64).
+// (This works on all eink kindle models.)
+//----------------------------------------
+void inline MwoScreen::PutDot(int x,int y,int c) 
+{
+    static int dither_map_64[64] = { 
+        1, 33,9, 41,3, 35,11,43,
+        49,17,57,25,51,19,59,27,
+        13,45,5, 37,15,47,7, 39,
+        61,29,53,21,63,31,55,23,
+        4, 36,12,44,2, 34,10,42,
+        52,20,60,28,50,18,58,26,
+        16,48,8, 40,14,46,6, 38,
+        64,32,56,24,62,30,54,22 }; // 64 threshold dither table, see http://en.wikipedia.org/wiki/Ordered_dithering
+
+//    mem_[pb*x/8+fs*y]=((128&(c-dither_map_64[(7&x)+8*(7&y)]))/128*(blk&(240*(1&~x)|
+//                       15*(1&x)|fb0[pb*x/8+fs*y])))|
+//                       ((128&(dither_map_64[(7&x)+8*(7&y)]-c))/128*wht|
+//                       (blk&((240*(1&x)|15*(1&~x))&fb0[pb*x/8+fs*y]))); // geekmaster formula 42
+
+    if (c > dither_map_64[x&7, y&7])
+    {
+        register int tx=-x+screen_info_.xres;
+        register int ty=-y+screen_info_.yres;
+        register int index;
+        index = ty*screen_info_.xres_virtual + tx;
+        mem_[index] = 0x0;
+    }
+    else
+    {
+        register int tx=-x+screen_info_.xres;
+        register int ty=-y+screen_info_.yres;
+        register int index;
+        index = ty*screen_info_.xres_virtual + tx;
+        mem_[index] = 0xFFFF;
+    }
+}
+
 
 //__u32 MwoScreen::UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags)
 //{
@@ -552,32 +590,6 @@ void MwoScreen::Update(int left, int top, int width, int height, int waveform, i
 	}
 }
 
-void MwoScreen::Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr)
-{
-	unsigned char* fbp = (unsigned char*)mem_;
-    int i,j,k;
-    int index;
-
-    // TODO: add rotation support
-    // TODO: use memcpy to optimize(maybe) the routine
-    left= -(left+width)+screen_info_.xres;
-    top = -(top+height)+screen_info_.yres;
-
-    ptr = ptr + height * width * bpp;
-
-	for (i = top; i < top+height; i++)
-    {
-		for (j = left; j < left+width;j++)
-        {
-            index= i*screen_info_.xres_virtual+j;
-            for (k=0;k<bpp;k++)
-            {
-                fbp[index*bpp+k] = *ptr;
-                ptr--;
-            }
-        }
-    }
-}
 
 int MwoScreen::xres(void)
 {
