@@ -31,8 +31,8 @@ class MwoScreen
         void TestDrawSpot(void);
         void TestDrawPicture(void);
         void TestAnimation(void);
-
         void TestDrawSpotDither(void);
+        void DrawCircle(int x, int y, int r);
     public:
         //__u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
         //void  DrawPicture(int left, int top, int width, int height, int bpp, unsigned char* ptr);
@@ -40,8 +40,6 @@ class MwoScreen
         void Update(void);
         void Update(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);
         void Copy(int left, int top, int width, int height, int bpp, unsigned char* ptr);
-
-        void DrawCircle(int x, int y, int r);
     public:
         int xres(void);
         int yres(void);
@@ -49,11 +47,11 @@ class MwoScreen
         inline void PutDot(int x, int y, int c); 
         //inline void PutDot(int x, int y); 
     private:
-        int fb_;
-        int ioctl_;
-        int mem_size_;
+        int             fb_;
+        int             ioctl_;
+        int             mem_size_;
         unsigned short* mem_;
-        __u32 marker_val_;
+        __u32           marker_val_;
 
         struct fb_var_screeninfo screen_info_;
         struct fb_var_screeninfo screen_info_saved_;

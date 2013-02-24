@@ -2,5 +2,6 @@
   <qresource>
     <file>images/test.png</file>
     <file>images/guake.png</file>
+    <file>images/gameboy.png</file>
   </qresource>
 </RCC>

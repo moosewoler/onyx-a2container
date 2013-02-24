@@ -361,16 +361,18 @@ void MwoScreen::DrawCircle(int cx,int cy,int r)
     int e=-r;
     int x=r;
     int y=0;
+    static int c=64;
+
     while (x>y) 
     {
-        PutDot(cx+y,cy-x,0); 
-        PutDot(cx+x,cy-y,8);
-        PutDot(cx+x,cy+y,16); 
-        PutDot(cx+y,cy+x,24);
-        PutDot(cx-y,cy+x,32); 
-        PutDot(cx-x,cy+y,40);
-        PutDot(cx-x,cy-y,48); 
-        PutDot(cx-y,cy-x,56);
+        PutDot(cx+y,cy-x,c); 
+        PutDot(cx+x,cy-y,c);
+        PutDot(cx+x,cy+y,c); 
+        PutDot(cx+y,cy+x,c);
+        PutDot(cx-y,cy+x,c); 
+        PutDot(cx-x,cy+y,c);
+        PutDot(cx-x,cy-y,c); 
+        PutDot(cx-y,cy-x,c);
         e+=y; 
         y++; 
         e+=y;
@@ -380,6 +382,12 @@ void MwoScreen::DrawCircle(int cx,int cy,int r)
             x-=1; 
             e-=x; 
         }
+    }
+
+    c--;
+    if (c<0)
+    {
+        c = 64;
     }
 }
 

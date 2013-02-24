@@ -1,10 +1,8 @@
 #include <QtGui/QtGui>
-#include <QLabel>
 
 #include "onyx/screen/screen_update_watcher.h"
 #include "onyx/ui/screen_rotation_dialog.h"
 #include "onyx/sys/sys.h"
-
 
 //#include <sys/time.h>
 #include "mwo_mainwindow.h"
@@ -14,16 +12,14 @@
 MwoMainwindow::MwoMainwindow(QWidget *parent)
     : QWidget(0, Qt::FramelessWindowHint)
 {
-    logger.log("ENTER MwoMainwindow:MwoMainwindow().");
-
-    setWindowTitle(QCoreApplication::tr("Five In Row"));
+    setWindowTitle(QCoreApplication::tr("A2Container"));
     setAutoFillBackground(true);
     setBackgroundRole(QPalette::Base);
 
     //game_widget_ = new GameWidget(this);
 
-    // FIXME: set up status bar, status_bar_ will cause crash.
-    //status_bar_ = new StatusBar(this);
+    // set up status bar, status_bar_ will cause crash.
+    //status_bar_ = new ui::StatusBar(this, ui::MENU | ui::SCREEN_REFRESH | ui::CONNECTION | ui::BATTERY | ui::CLOCK );
     //status_bar_->setFocusPolicy(Qt::NoFocus);
     //connect(status_bar_, SIGNAL(menuClicked()), this, SLOT(showMenu()));
 
@@ -36,76 +32,54 @@ MwoMainwindow::MwoMainwindow(QWidget *parent)
     // set up popup menu to long press screen
     SysStatus & sys_status = SysStatus::instance();
     connect( &sys_status, SIGNAL(mouseLongPress(QPoint, QSize) ), this, SLOT(OnMouseLongPress(QPoint, QSize) ) );
-    //connect( game_widget_, SIGNAL( popupMenu() ), this, SLOT( showMenu() ) );
     
     // set up screen watcher and refresh
     onyx::screen::watcher().addWatcher(this);
-
-    logger.log("LEAVE MwoMainwindow:MwoMainwindow().");
 }
 
 MwoMainwindow::~MwoMainwindow()
 {
-    logger.log("ENTER MwoMainwindow:~MwoMainwindow().");
-    logger.log("LEAVE MwoMainwindow:~MwoMainwindow().");
 }
 
 void MwoMainwindow::keyPressEvent(QKeyEvent *ke)
 {
-    logger.log("ENTER MwoMainwindow:keyPressEvent().");
     ke->accept();
-    logger.log("LEAVE MwoMainwindow:keyPressEvent().");
 }
 
 void MwoMainwindow::keyReleaseEvent(QKeyEvent *ke)
 {
-    logger.log("ENTER MwoMainwindow:keyReleaseEvent().");
     switch (ke->key())
     {
     case ui::Device_Menu_Key:
         ke->accept();
         showMenu();
-        logger.log(QString("INFO  Device_Menu_Key pressed."));
         break;
     case Qt::Key_Left:
-        logger.log(QString("INFO  Key_Left pressed."));
         break;
     case Qt::Key_Right:
-        logger.log(QString("INFO  Key_Right pressed."));
         break;
     case Qt::Key_PageDown:
-        {
-            logger.log(QString("INFO  Key_PageDown pressed."));
-        }
         break;
     case Qt::Key_Down:
-        logger.log(QString("INFO  Key_Down pressed."));
         break;
     case Qt::Key_PageUp:
         break;
     case Qt::Key_Up:
-        logger.log(QString("INFO  Key_Up pressed."));
         break;
     case Qt::Key_C:
-        logger.log(QString("INFO  Key_C pressed."));
         break;
     case Qt::Key_Escape:
     case Qt::Key_Home:
         ke->accept();
         stop();
-        logger.log(QString("INFO  Key_Home pressed."));
     default:
         //qApp->sendEvent(game_widget_, ke);
-        logger.log(QString("INFO  unknown key pressed."));
         break;
     }
-
-    logger.log("LEAVE MwoMainwindow:keyReleaseEvent().");
 }
 
 void MwoMainwindow::showMenu()
 {
-    logger.log("ENTER MwoMainwindow:showMenu().");
     PopupMenu menu(this);
 
     // 增加自定义菜单项
@@ -201,43 +175,32 @@ void MwoMainwindow::showMenu()
     }
 
     // 重画屏幕
-    //repaint();
-    //onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
-    logger.log("LEAVE MwoMainwindow:showMenu().");
+    repaint();
+    onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
 }
 
 
 
 void MwoMainwindow::mousePressEvent(QMouseEvent*me)
 {
-    logger.log("ENTER MwoMainwindow:mousePressEvent().");
     me->accept();
-    logger.log("LEAVE MwoMainwindow:mousePressEvent().");
 }
 
 void MwoMainwindow::OnMouseLongPress(QPoint point, QSize size)
 {
-    logger.log("ENTER MwoMainwindow:mouseLongPressEvent().");
     showMenu();
-    logger.log("LEAVE MwoMainwindow:mouseLongPressEvent().");
 }
 
 bool MwoMainwindow::start()
 {
-    logger.log("ENTER MwoMainwindow:start().");
-
     showMaximized();
     onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC);
-
-    logger.log("LEAVE MwoMainwindow:start().");
     return true;
 }
 
 bool MwoMainwindow::stop()
 {
-    logger.log("ENTER MwoMainwindow:stop().");
     qApp->exit();
-    logger.log("LEAVE MwoMainwindow:stop().");
     return true;
 }
 
@@ -252,9 +215,9 @@ bool MwoMainwindow::stop()
 
 void MwoMainwindow::dither(void)
 {
-    logger.log("ENTER MwoMainwindow:dither().");
-
     mwo_screen_.TestDrawSpotDither();
+}
 
-    logger.log("LEAVE MwoMainwindow:dither().");
+void MwoMainwindow::paintEvent(QPaintEvent* pe)
+{
 }

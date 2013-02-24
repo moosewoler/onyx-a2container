@@ -3,7 +3,7 @@
 
 #include <QtGui/QtGui>
 #include "onyx/ui/ui.h"
-//#include "onyx/ui/status_bar.h"
+#include "onyx/ui/status_bar.h"
 //#include "onyx/screen/screen_proxy.h"
 //#include "onyx/ui/ui_utils.h"
 //#include "game_widget.h"
@@ -28,6 +28,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent *e);
     virtual void keyReleaseEvent(QKeyEvent *ke);
     virtual void mousePressEvent(QMouseEvent*);
+    virtual void paintEvent(QPaintEvent* pe);
     //virtual void closeEvent(QCloseEvent * event);
     //virtual bool eventFilter(QObject *obj, QEvent *event);
 
@@ -42,8 +43,8 @@ private:
     MwoActions    mwo_actions_;
     MwoScreen     mwo_screen_;
     //GameWidget* game_widget_;
-    //StatusBar   status_bar_;
     //QTimer      timer_;
+    //ui::StatusBar *status_bar_;
 };
 
 
