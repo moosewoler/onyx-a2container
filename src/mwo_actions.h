@@ -6,7 +6,7 @@
 
 using namespace ui;
 
-enum MwoActionsType{INVALID=-1, TEST1=0, TEST2=1, TEST3=2, DITHER=3};
+enum MwoActionsType{INVALID=-1, TEST1=0, TEST2=1, TEST3=2, DITHER=3, DIRECTFB=4};
 
 class MwoActions :public BaseActions
 {

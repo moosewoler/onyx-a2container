@@ -32,6 +32,7 @@ class MwoScreen
         void TestDrawPicture(void);
         void TestAnimation(void);
         void TestDrawSpotDither(void);
+        void TestDirectFB(void);
         void DrawCircle(int x, int y, int r);
     public:
         //__u32 UpdateToDisplay(int left, int top, int width, int height, int waveform, int wait_for_complete, uint flags);

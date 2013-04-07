@@ -50,6 +50,13 @@ void MwoActions::generateActions()
     dither->setIcon(QIcon(QPixmap(":/images/guake.png")));
     dither->setData(DITHER);
     actions_.push_back(dither);
+
+    shared_ptr<QAction> directfb(new QAction(exclusiveGroup()));
+    directfb->setCheckable(true);
+    directfb->setText(QCoreApplication::tr("DirectFB"));
+    directfb->setIcon(QIcon(QPixmap(":/images/guake.png")));
+    directfb->setData(DIRECTFB);
+    actions_.push_back(directfb);
 }
 
 MwoActionsType MwoActions::selected()

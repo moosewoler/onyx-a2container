@@ -1,3 +1,4 @@
+#include <directfb.h>
 #include "mwo_screen.h"
 #include "mwo_logger.h"
 
@@ -235,6 +236,66 @@ void MwoScreen::TestDrawSpot(void)
             //UpdateToDisplay(0, 0, screen_info_.xres, screen_info_.yres, wave_mode, TRUE, EPDC_FLAG_FORCE_MONOCHROME);
             Update();
         }
+        state_ = MwoScreen::READY;
+        logger.log("LEAVE MwoScreen:TestDrawSpot().");
+    }
+}
+
+/*******************************************************************************
+ *
+ ******************************************************************************/
+static IDirectFB *dfb = NULL;
+static IDirectFBSurface *primary = NULL;
+static int screen_width  = 0;
+static int screen_height = 0;
+
+#define DFBCHECK(x...)                                          \
+{                                                               \
+    DFBResult err = x;                                          \
+                                                                \
+    if (err != DFB_OK)                                          \
+    {                                                           \
+        fprintf( stderr, "%s <%d>:\n\t", __FILE__, __LINE__ );  \
+        DirectFBErrorFatal( #x, err );                          \
+    }                                                           \
+}
+void MwoScreen::TestDirectFB(void)
+{
+    if (state_ == MwoScreen::READY)
+    {
+
+        logger.log("ENTER MwoScreen:TestDrawSpot().");
+        int retval;
+        int wave_mode = WAVEFORM_MODE_A2;
+        int x,y;
+
+        state_ = MwoScreen::BUSY;
+
+        DFBSurfaceDescription dsc;
+
+        DFBCHECK (DirectFBInit (NULL, NULL));
+        DFBCHECK( DirectFBSetOption( "no-vt", NULL ) );                // 由于onyx没有tty0，所以姑且禁用vt
+        DFBCHECK( DirectFBSetOption( "disable-module", "tslib" ) );    // 禁用tslib
+        DFBCHECK (DirectFBCreate (&dfb));
+        DFBCHECK (dfb->SetCooperativeLevel (dfb, DFSCL_FULLSCREEN));
+
+        dsc.flags = DSDESC_CAPS;
+        dsc.caps  = (DFBSurfaceCapabilities)(DSCAPS_PRIMARY | DSCAPS_FLIPPING);
+
+        DFBCHECK (dfb->CreateSurface( dfb, &dsc, &primary ));
+        DFBCHECK (primary->GetSize (primary, &screen_width, &screen_height));
+        DFBCHECK (primary->FillRectangle (primary, 0, 0, screen_width, screen_height));
+        DFBCHECK (primary->SetColor (primary, 0x80, 0x80, 0xff, 0xff));
+
+        for (int i=0;i<10;i++)
+        {
+            DFBCHECK (primary->DrawLine (primary, 0, i*10+1, screen_width - 1, i*10+1));
+        }
+        DFBCHECK (primary->Flip (primary, NULL, (DFBSurfaceFlipFlags)(0)));
+        Update();
+
+        primary->Release( primary );
+        dfb->Release( dfb );
         state_ = MwoScreen::READY;
         logger.log("LEAVE MwoScreen:TestDrawSpot().");
     }

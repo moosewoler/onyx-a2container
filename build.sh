@@ -10,14 +10,25 @@ fi
 #===============================================================================
 build_for_arm()
 {
-#    PATH='/opt/onyx/arm/bin:/opt/freescale/usr/local/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/:'${PATH}
-#    #ONYX_SDK_ROOT='/opt/onyx/arm'
-#    PKG_CONFIG_PATH='/opt/onyx/arm/lib/pkgconfig/'
-#    QMAKESPEC='/opt/onyx/arm/mkspecs/qws/linux-arm-g++/'
-    ARM_CC="/opt/freescale/usr/local/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-gcc"
-    ARM_CXX="/opt/freescale/usr/local/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-g++"
+    export PATH=/opt/onyx/arm/bin/:/opt/freescale/usr/local/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/:${PATH}
+
+    CLFS_TARGET=arm-linux
+    export CC="${CLFS_TARGET}-gcc"
+    export CXX="${CLFS_TARGET}-g++"
+    export AR="${CLFS_TARGET}-ar"
+    export AS="${CLFS_TARGET}-as"
+    export RANLIB="${CLFS_TARGET}-ranlib"
+    export LD="${CLFS_TARGET}-ld"
+    export STRIP="${CLFS_TARGET}-strip"
+
+    export PKG_CONFIG_PATH=${ONYXDIR}/mwo/lib/pkgconfig:/opt/onyx/arm/lib/pkgconfig/ 
+    export PKG_CONFIG_LIBDIR=${PKG_CONFIG_PATH}
+
+    export QMAKESPEC=/opt/onyx/arm/mkspecs/qws/linux-arm-g++/
+    #ONYX_SDK_ROOT='/opt/onyx/arm'
+
     install -d build/arm
-    cd build/arm && CC=${ARM_CC} CXX=${ARM_CXX} cmake ../.. -DBUILD_FOR_ARM:BOOL=ON
+    cd build/arm && cmake ../.. -DBUILD_FOR_ARM:BOOL=ON
     make -j2
 }
 

@@ -169,14 +169,17 @@ void MwoMainwindow::showMenu()
         case DITHER:
             dither();
             break;
+        case DIRECTFB:
+            mwo_screen_.TestDirectFB();
+            break;
         default:
             break;
         }
     }
 
     // 重画屏幕
-    repaint();
-    onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
+    //repaint();
+    //onyx::screen::instance().flush(0, onyx::screen::ScreenProxy::GC, onyx::screen::ScreenCommand::WAIT_ALL);
 }
 
 
@@ -220,10 +223,10 @@ void MwoMainwindow::dither(void)
 
 void MwoMainwindow::paintEvent(QPaintEvent* pe)
 {
-    QPainter painter(this);
-    QImage image;
-    image.load(":/images/gameboy.png");
-    //int x = (width() - image.width()) / 2;
-    //int y = height() - BUTTON_HEIGHT - image.height() - SPACING;
-    painter.drawImage(QPoint(0, 0), image);
+    //QPainter painter(this);
+    //QImage image;
+    //image.load(":/images/gameboy.png");
+    ////int x = (width() - image.width()) / 2;
+    ////int y = height() - BUTTON_HEIGHT - image.height() - SPACING;
+    //painter.drawImage(QPoint(0, 0), image);
 }

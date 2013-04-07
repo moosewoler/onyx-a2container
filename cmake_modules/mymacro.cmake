@@ -29,5 +29,6 @@ add_definitions(-DCONFIG_CTRL_IFACE_UNIX)
 
 # Project include directories.
 message             (STATUS "by MWO: QT_LIBRARY_DIR is set to ${QT_LIBRARY_DIR}")
-include_directories (BEFORE ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_FIND_ROOT_PATH}/include ~/Code/freescale/linux-2.6.35.3/include)
-link_directories    (${QT_LIBRARY_DIR})
+message             (STATUS "by MWO: ONYX_MWO_ROOT is set to ${ONYX_MWO_ROOT}")
+include_directories (BEFORE ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_FIND_ROOT_PATH}/include /opt/freescale/linux-2.6.35.3/include ${ONYX_MWO_ROOT}/include/directfb )
+#link_directories    (${QT_LIBRARY_DIR})
